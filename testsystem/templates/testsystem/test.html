@@ -1,0 +1,109 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>{{ test.title }}</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body { background:#f1f3f4; }
+.form-card { max-width:700px; margin:auto; background:white; border-radius:10px; padding:30px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+.question { display:none; }
+.question.active { display:block; animation:fade 0.4s; }
+@keyframes fade { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+.answer input { display:none; }
+.answer label { display:block; padding:12px; border:1px solid #dadce0; border-radius:6px; margin-bottom:8px; cursor:pointer; transition:0.2s; }
+.answer label:hover { background:#f8f9fa; }
+.answer input:checked + label { border-color:#1a73e8; background:#e8f0fe; }
+.question-image { max-width:100%; max-height:350px; margin:10px 0; }
+.progress { height:10px; }
+.text-answer { padding:10px; margin-top:5px; }
+</style>
+
+</head>
+
+<body>
+<div class="container py-5">
+<div class="form-card">
+<h3 class="mb-4 text-center">{{ test.title }}</h3>
+
+<div class="mb-4">
+<label class="fw-bold">Введите ваше имя</label>
+<input type="text" name="name" class="form-control" form="testForm" required>
+</div>
+
+<div class="progress mb-4">
+<div class="progress-bar" id="progressBar" style="width:0%"></div>
+</div>
+
+<form method="post" id="testForm">
+{% csrf_token %}
+
+{% for q in questions %}
+<div class="question" data-index="{{ forloop.counter0 }}">
+<h5 class="mb-3">{{ forloop.counter }}. {{ q.text }}</h5>
+
+{% if q.image %}
+<img src="{{ q.image.url }}" class="question-image">
+{% endif %}
+
+{% if q.allow_text_answer %}
+<input type="number" step="any" class="form-control text-answer" name="text_{{ q.id }}" placeholder="Введите числовой ответ">
+{% else %}
+{% for a in q.answer_set.all %}
+<div class="answer">
+<input type="radio" name="{{ q.id }}" id="a{{ a.id }}" value="{{ a.id }}">
+<label for="a{{ a.id }}">{{ a.text }}</label>
+</div>
+{% endfor %}
+{% endif %}
+
+</div>
+{% endfor %}
+
+<div class="d-flex justify-content-between mt-4">
+<button type="button" class="btn btn-secondary" id="prevBtn">Назад</button>
+<button type="button" class="btn btn-primary" id="nextBtn">Следующий</button>
+<button type="submit" class="btn btn-success d-none" id="submitBtn">Отправить</button>
+</div>
+
+</form>
+</div>
+</div>
+
+<script>
+const questions = document.querySelectorAll(".question")
+const progress = document.getElementById("progressBar")
+let current = 0
+
+function showQuestion(i){
+    questions.forEach(q => q.classList.remove("active"))
+    questions[i].classList.add("active")
+    let percent = ((i+1)/questions.length)*100
+    progress.style.width = percent + "%"
+    document.getElementById("prevBtn").style.display = i===0 ? "none":"inline-block"
+    if(i === questions.length-1){
+        document.getElementById("nextBtn").classList.add("d-none")
+        document.getElementById("submitBtn").classList.remove("d-none")
+    } else {
+        document.getElementById("nextBtn").classList.remove("d-none")
+        document.getElementById("submitBtn").classList.add("d-none")
+    }
+}
+
+document.getElementById("nextBtn").onclick=()=>{
+    if(current < questions.length-1){ current++; showQuestion(current) }
+}
+
+document.getElementById("prevBtn").onclick=()=>{
+    if(current > 0){ current--; showQuestion(current) }
+}
+
+showQuestion(current)
+</script>
+
+</body>
+</html>

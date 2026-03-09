@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Результат</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-white">
+<div class="container py-5">
+    <h2 class="fw-bold mb-4">Результат теста</h2>
+    <p>Вы набрали <span class="fw-bold">{{ score }}</span> из {{ total }} баллов.</p>
+    <p>Ваша оценка: <span class="fw-bold">{{ grade }}</span></p>
+    <a href="{% url 'index' %}" class="btn btn-primary">Вернуться к списку тестов</a>
+</div>
+</body>
+</html>
