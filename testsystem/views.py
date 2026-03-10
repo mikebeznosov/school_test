@@ -1,6 +1,36 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Test, Question, Answer, Result
 from django.utils import timezone
+from .models import MainMenuItem, SideMenuItem, SidebarLink, SitePage, MathFormula
+
+
+def home_page(request):
+    """
+    Главная страница сайта с управляемым контентом
+    """
+    # Получаем контент страницы (берём первую опубликованную запись)
+    page_content = SitePage.objects.filter(is_published=True).first()
+
+    # Получаем элементы меню
+    context = {
+        'main_menu': MainMenuItem.objects.filter(is_active=True).order_by('order'),
+        'side_menu': SideMenuItem.objects.filter(is_active=True).order_by('order'),
+        'sidebar_links': SidebarLink.objects.filter(is_active=True).order_by('order'),
+        'page': page_content,
+        'formulas': MathFormula.objects.all()[:5],  # последние 5 формул для примера
+    }
+    return render(request, 'home_page.html', context)
+
+def page_view(request):
+    """Главная страница с управляемым контентом"""
+    context = {
+        'main_menu': MainMenuItem.objects.filter(is_active=True),
+        'side_menu': SideMenuItem.objects.filter(is_active=True),
+        'sidebar_links': SidebarLink.objects.filter(is_active=True),
+        'page': PageContent.objects.filter(is_published=True).first(),
+        'formulas': MathFormula.objects.all()[:5],  # последние 5 формул
+    }
+    return render(request, 'page_detail.html', context)
 
 # Главная страница — список всех тестов
 def index(request):

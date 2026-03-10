@@ -1,0 +1,223 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru" class="h-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.title|default:"Управление контентом" }}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- MathJax для формул -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+    <style>
+        body {
+            padding-top: 60px;
+        }
+
+        .sidebar-left {
+            background-color: #f4f6f9;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15),
+                        0 0 0 1px rgba(0, 0, 0, 0.02);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .sidebar-left:hover {
+            box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.2),
+                        0 0 0 1px rgba(0, 0, 0, 0.02);
+        }
+
+        .main-content {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03),
+                        0 0 0 1px rgba(0, 0, 0, 0.02);
+        }
+
+        /* Стили для контента из CKEditor */
+        .main-content ul, .main-content ol {
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+        }
+
+        .main-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar-left:hover {
+                box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15);
+            }
+        }
+    </style>
+</head>
+<body class="d-flex flex-column h-100">
+
+    <!-- ОСНОВНОЕ МЕНЮ (из модели MainMenuItem) -->
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Управление контентом</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <ul class="navbar-nav me-auto mb-2 mb-md-0">
+                    {% for item in main_menu %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == item.url %}active{% endif %}"
+                               href="{{ item.url }}">{{ item.title }}</a>
+                        </li>
+                    {% empty %}
+                        <li class="nav-item">
+                            <span class="nav-link text-muted">Меню пусто (добавьте в админке)</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <form class="d-flex" role="search">
+                    <input class="form-control me-2" type="search" placeholder="Поиск" aria-label="Поиск">
+                    <button class="btn btn-outline-success" type="submit">Найти</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ОСНОВНОЙ КОНТЕЙНЕР -->
+    <main class="flex-shrink-0">
+        <div class="container my-4">
+            <div class="row g-4">
+
+                <!-- ЛЕВАЯ КОЛОНКА: вспомогательное меню -->
+                <div class="col-lg-3">
+                    <div class="sidebar-left">
+                        <h5 class="mb-3">Вспомогательное меню</h5>
+                        <ul class="nav flex-column">
+                            {% for item in side_menu %}
+                                <li class="nav-item mb-2">
+                                    <a href="{{ item.url }}" class="nav-link p-0">
+                                        {{ item.icon|default:"📄" }} {{ item.title }}
+                                    </a>
+                                </li>
+                            {% empty %}
+                                <li class="nav-item mb-2">
+                                    <span class="text-muted">Меню пусто</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <hr>
+
+                        <!-- Ссылки под меню (из модели SidebarLink) -->
+                        {% for link in sidebar_links %}
+                            <div class="mb-3">
+                                <a href="{{ link.url }}" class="fw-bold text-decoration-none">
+                                    {{ link.title }}
+                                </a>
+                                {% if link.description %}
+                                    <p class="small text-muted mb-0">{{ link.description }}</p>
+                                {% endif %}
+                            </div>
+                        {% empty %}
+                            <p class="small text-muted">Нет дополнительных ссылок</p>
+                        {% endfor %}
+
+                        <!-- Информация о редактировании -->
+                        <div class="mt-4 pt-3 border-top">
+                            <p class="small text-muted mb-0">
+                                ✏️ <a href="{% url 'admin:index' %}" target="_blank">Редактировать в админке</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ЦЕНТРАЛЬНАЯ КОЛОНКА: основной контент -->
+                <div class="col-lg-9">
+                    <div class="main-content">
+                        <!-- Заголовок -->
+                        <h1 class="mb-4">{{ page.title|default:"Заголовок страницы" }}</h1>
+
+                        <!-- Вступительная часть -->
+                        {% if page.lead %}
+                            <p class="lead">{{ page.lead }}</p>
+                        {% else %}
+                            <p class="lead text-muted fst-italic">Вступительная часть не заполнена</p>
+                        {% endif %}
+
+                        <!-- Основной текст (с поддержкой HTML от CKEditor) -->
+                        <div class="content-body">
+                            {% if page.body %}
+                                {{ page.body|safe }}
+                            {% else %}
+                                <p class="text-muted">Основной текст пока не добавлен.</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Изображение (если загружено) -->
+                        {% if page.image %}
+                            <figure class="figure my-4 w-100">
+                                <img src="{{ page.image.url }}" class="figure-img img-fluid rounded"
+                                     alt="{{ page.image_caption|default:'Изображение' }}"
+                                     style="width: 100%; max-height: 500px; object-fit: contain;">
+                                {% if page.image_caption %}
+                                    <figcaption class="figure-caption text-center">
+                                        {{ page.image_caption }}
+                                    </figcaption>
+                                {% endif %}
+                            </figure>
+                        {% endif %}
+
+                        <!-- Примеры математических формул (если есть) -->
+                        {% if formulas %}
+                            <div class="mt-5 pt-3 border-top">
+                                <h4>Примеры формул</h4>
+                                {% for formula in formulas %}
+                                    <div class="mb-3 p-3 bg-light rounded">
+                                        <p class="mb-1 fw-bold">{{ formula.name }}</p>
+                                        <p>$${{ formula.latex_code }}$$</p>
+                                        {% if formula.description %}
+                                            <p class="small text-muted mb-0">{{ formula.description }}</p>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ПОДВАЛ -->
+    <footer class="footer mt-auto py-4 bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <span class="text-muted small">© 2026 Управление контентом</span>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <span class="text-muted small">
+                        Данные управляются через <a href="{% url 'admin:index' %}">админку Django</a>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -22,8 +22,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Наше приложение
-    'testsystem',
+    'ckeditor',
+    'testsystem',  # ваше приложение
 ]
 
 # ------------------------------
