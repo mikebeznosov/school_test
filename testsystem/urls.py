@@ -9,4 +9,5 @@ urlpatterns = [
     path('results/', views.results_list_all, name='results_list'),                # все результаты
     path('', views.home_page, name='home'),  # главная страница
     path('admin/', admin.site.urls),  # админка
+    path('<slug:slug>/', views.page_view, name='page'),
 ]
