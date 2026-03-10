@@ -1,17 +1,16 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Test, Question, Answer, Result
 from django.utils import timezone
+from .models import Test, Question, Answer, Result
 from .models import MainMenuItem, SideMenuItem, SidebarLink, SitePage, MathFormula
 
 
+# ===================== Главная страница =====================
 def home_page(request):
     """
     Главная страница сайта с управляемым контентом
     """
-    # Получаем контент страницы (берём первую опубликованную запись)
     page_content = SitePage.objects.filter(is_published=True).first()
 
-    # Получаем элементы меню
     context = {
         'main_menu': MainMenuItem.objects.filter(is_active=True).order_by('order'),
         'side_menu': SideMenuItem.objects.filter(is_active=True).order_by('order'),
@@ -21,36 +20,38 @@ def home_page(request):
     }
     return render(request, 'home_page.html', context)
 
+
 def page_view(request):
-    """Главная страница с управляемым контентом"""
+    """Просмотр отдельной страницы сайта"""
     context = {
         'main_menu': MainMenuItem.objects.filter(is_active=True),
         'side_menu': SideMenuItem.objects.filter(is_active=True),
         'sidebar_links': SidebarLink.objects.filter(is_active=True),
-        'page': PageContent.objects.filter(is_published=True).first(),
+        'page': SitePage.objects.filter(is_published=True).first(),
         'formulas': MathFormula.objects.all()[:5],  # последние 5 формул
     }
     return render(request, 'page_detail.html', context)
 
-# Главная страница — список всех тестов
+
+# ===================== Список тестов =====================
 def index(request):
     tests = Test.objects.all().order_by('-id')  # новые сверху
     return render(request, 'testsystem/index.html', {'tests': tests})
 
 
-# Прохождение теста
-def take_test(request, test_id):
+# ===================== Прохождение теста =====================
+def test(request, test_id):
     test = get_object_or_404(Test, id=test_id)
-    questions = test.question_set.all()
+    questions = test.questions.prefetch_related('answers')  # оптимизация: сразу подтягиваем ответы
 
     if request.method == 'POST':
-        name = request.POST.get('name')
+        name = request.POST.get('name', 'Аноним')
         score = 0
 
         for q in questions:
             if q.allow_text_answer:
                 answer_text = request.POST.get(f'text_{q.id}', '').strip()
-                correct_answers = [a.text.strip() for a in q.answer_set.filter(is_correct=True)]
+                correct_answers = [a.text.strip() for a in q.answers.filter(is_correct=True)]
                 if answer_text in correct_answers:
                     score += 1
             else:
@@ -90,16 +91,11 @@ def take_test(request, test_id):
     return render(request, 'testsystem/test.html', {'test': test, 'questions': questions})
 
 
-# Просмотр результатов конкретного пользователя
+# ===================== Просмотр результатов =====================
 def result_list(request, student_name):
     results = Result.objects.filter(student_name=student_name).order_by('-date_taken')
     return render(request, 'testsystem/results_list.html', {'results': results, 'student_name': student_name})
 
-
-# Просмотр всех результатов (например, для админа)
-def results_list_all(request):
-    results = Result.objects.select_related('test').order_by('-date_taken')
-    return render(request, 'testsystem/results_list.html', {'results': results})
 
 def results_list_all(request):
     results = Result.objects.select_related('test').order_by('-date_taken')

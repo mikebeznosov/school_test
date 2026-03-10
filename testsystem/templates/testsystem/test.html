@@ -66,7 +66,7 @@ body { background:#f1f3f4; }
 {% if q.allow_text_answer %}
 <input type="number" step="any" class="form-control text-answer" name="text_{{ q.id }}" placeholder="Введите числовой ответ">
 {% else %}
-{% for a in q.answer_set.all %}
+{% for a in q.answers.all %}
 <div class="answer">
 <input type="radio" name="{{ q.id }}" id="a{{ a.id }}" value="{{ a.id }}">
 <label for="a{{ a.id }}">{{ a.text }}</label>
