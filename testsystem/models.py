@@ -2,32 +2,8 @@ from django.db import models
 from ckeditor.fields import RichTextField  # если используете CKEditor
 from django.utils.text import slugify
 
-class SitePage(models.Model):
-    title = models.CharField("Заголовок страницы", max_length=200)
-    slug = models.SlugField("URL страницы", max_length=200, unique=True)
-    lead = models.TextField("Вступительная часть", blank=True)
-    body = RichTextField("Основной текст", blank=True)
-    image = models.ImageField("Изображение", upload_to='page_images/', blank=True, null=True)
-    image_caption = models.CharField("Подпись к изображению", max_length=300, blank=True)
-    is_published = models.BooleanField("Опубликовано", default=True)
-    updated_at = models.DateTimeField("Дата обновления", auto_now=True)
-
-class Meta:
-    verbose_name = "Страница сайта"
-    verbose_name_plural = "Страницы сайта"
-
-    def __str__(self):
-        return self.title
-
-    # автоматическая генерация slug при сохранении, если не указан
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.title)
-        super().save(*args, **kwargs)
-
 
 # ============= СТАРЫЕ МОДЕЛИ (для тестов) =============
-
 class Test(models.Model):
     title = models.CharField("Название теста", max_length=255)
     description = models.TextField("Описание теста", blank=True)
@@ -68,7 +44,6 @@ class Result(models.Model):
 
 
 # ============= НОВЫЕ МОДЕЛИ (для управления контентом страницы) =============
-
 class MainMenuItem(models.Model):
     title = models.CharField("Название пункта", max_length=100)
     url = models.CharField("Ссылка", max_length=200)
@@ -118,6 +93,7 @@ class SidebarLink(models.Model):
 
 class SitePage(models.Model):
     title = models.CharField("Заголовок страницы", max_length=200)
+    slug = models.SlugField("URL (slug)", max_length=200, unique=True, blank=True)
     lead = models.TextField("Вступительная часть", blank=True)
     body = RichTextField("Основной текст", blank=True)
     image = models.ImageField("Изображение", upload_to='page_images/', blank=True, null=True)
@@ -131,6 +107,13 @@ class SitePage(models.Model):
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        # Автогенерация slug из title, если не заполнен
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
 
 class MathFormula(models.Model):
     name = models.CharField("Название формулы", max_length=100)

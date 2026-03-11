@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 # ------------------------------
 # Базовые настройки
@@ -47,11 +48,13 @@ ROOT_URLCONF = 'school_tests.urls'
 # ------------------------------
 # Шаблоны
 # ------------------------------
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # шаблоны ищутся в папках templates каждого приложения
-        'APP_DIRS': True,  # обязательно True!
+        'DIRS': [BASE_DIR / "templates"],  # глобальные шаблоны (опционально)
+        'APP_DIRS': True,                   # обязательно для поиска в testsystem/templates/
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -62,7 +65,6 @@ TEMPLATES = [
         },
     },
 ]
-
 # ------------------------------
 # WSGI
 # ------------------------------
