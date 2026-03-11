@@ -92,8 +92,15 @@ class SidebarLink(models.Model):
 
 
 class SitePage(models.Model):
+    SUBJECT_CHOICES = [
+        ('algebra', 'Алгебра'),
+        ('geometry', 'Геометрия'),
+        ('physics', 'Физика'),
+    ]
+
     title = models.CharField("Заголовок страницы", max_length=200)
     slug = models.SlugField("URL (slug)", max_length=200, unique=True, blank=True)
+    subject = models.CharField("Предмет", max_length=20, choices=SUBJECT_CHOICES, default='algebra')
     lead = models.TextField("Вступительная часть", blank=True)
     body = RichTextField("Основной текст", blank=True)
     image = models.ImageField("Изображение", upload_to='page_images/', blank=True, null=True)
@@ -109,11 +116,9 @@ class SitePage(models.Model):
         return self.title
 
     def save(self, *args, **kwargs):
-        # Автогенерация slug из title, если не заполнен
         if not self.slug:
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
-
 
 class MathFormula(models.Model):
     name = models.CharField("Название формулы", max_length=100)

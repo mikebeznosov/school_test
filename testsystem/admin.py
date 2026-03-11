@@ -55,25 +55,17 @@ class SidebarLinkAdmin(admin.ModelAdmin):
 
 # ============= УПРАВЛЕНИЕ КОНТЕНТОМ СТРАНИЦЫ (УЛУЧШЕННАЯ ВЕРСИЯ) =============
 @admin.register(SitePage)
-class PageContentAdmin(admin.ModelAdmin):
-    # Добавляем предпросмотр и другие улучшения, но сохраняем вашу структуру
-    list_display = ['title', 'preview_lead', 'image_preview', 'is_published', 'updated_at']
-    list_filter = ['is_published', 'updated_at']
-    search_fields = ['title', 'lead', 'body']
+class SitePageAdmin(admin.ModelAdmin):
+    list_display = ('title', 'subject', 'is_published', 'updated_at')
+    list_filter = ('subject', 'is_published')
+    search_fields = ('title', 'body')
 
-    fieldsets = (
-        ('Основное', {
-            'fields': ('title', 'lead', 'body'),
-            'description': 'Основные текстовые элементы страницы'
-        }),
-        ('Изображение', {
-            'fields': ('image', 'image_caption'),
-            'classes': ('collapse',)
-        }),
-        ('Публикация', {
-            'fields': ('is_published',)
-        }),
-    )
+    # Указываем поля формы явно
+    fields = ('title', 'slug', 'subject', 'lead', 'body', 'image', 'image_caption', 'is_published')
+
+    prepopulated_fields = {'slug': ('title',)}
+
+
 
     def preview_lead(self, obj):
         if obj.lead:
