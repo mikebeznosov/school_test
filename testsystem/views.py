@@ -5,12 +5,20 @@ from .models import (
     MainMenuItem, SideMenuItem, SidebarLink, SitePage, MathFormula
 )
 
+# Список доступных предметов
+SUBJECTS = [
+    ('algebra', 'Алгебра'),
+    ('geometry', 'Геометрия'),
+    ('physics', 'Физика'),
+]
 
 # =====================================
-# Главная страница
+# Главная страница / Страницы по предмету
 # =====================================
 def home_page(request, subject=None):
-    """Главная страница. Если указан subject, фильтруем страницы по предмету."""
+    """
+    Главная страница. Если указан subject, фильтруем страницы по предмету.
+    """
     pages = SitePage.objects.filter(is_published=True)
     if subject:
         pages = pages.filter(subject=subject)
@@ -21,8 +29,14 @@ def home_page(request, subject=None):
         'sidebar_links': SidebarLink.objects.filter(is_active=True).order_by('order'),
         'pages': pages,
         'formulas': MathFormula.objects.all()[:5],
-        'subject': subject,
+        'subjects': SUBJECTS,      # список предметов для бокового меню
+        'current_subject': subject,
     }
+
+    # Если передан subject, показываем первую страницу в этом разделе
+    page = pages.first() if pages.exists() else None
+    context['page'] = page
+
     return render(request, 'testsystem/home_page.html', context)
 
 
@@ -30,13 +44,20 @@ def home_page(request, subject=None):
 # CMS-страницы по slug
 # =====================================
 def page_view(request, slug):
+    """
+    Просмотр конкретной страницы CMS по slug
+    """
     page = get_object_or_404(SitePage, slug=slug, is_published=True)
+
     context = {
         'page': page,
         'main_menu': MainMenuItem.objects.filter(is_active=True).order_by('order'),
         'side_menu': SideMenuItem.objects.filter(is_active=True).order_by('order'),
         'sidebar_links': SidebarLink.objects.filter(is_active=True).order_by('order'),
         'formulas': MathFormula.objects.all()[:5],
+        'subjects': SUBJECTS,
+        'current_subject': page.subject,
+        'pages': SitePage.objects.filter(is_published=True),
     }
     return render(request, 'testsystem/home_page.html', context)
 

@@ -91,22 +91,30 @@ class SidebarLink(models.Model):
         return self.title
 
 
-class SitePage(models.Model):
-    SUBJECT_CHOICES = [
-        ('algebra', 'Алгебра'),
-        ('geometry', 'Геометрия'),
-        ('physics', 'Физика'),
-    ]
+SUBJECT_CHOICES = [
+    ('algebra', 'Алгебра'),
+    ('geometry', 'Геометрия'),
+    ('physics', 'Физика'),
+]
 
+
+class SitePage(models.Model):
     title = models.CharField("Заголовок страницы", max_length=200)
     slug = models.SlugField("URL (slug)", max_length=200, unique=True, blank=True)
-    subject = models.CharField("Предмет", max_length=20, choices=SUBJECT_CHOICES, default='algebra')
     lead = models.TextField("Вступительная часть", blank=True)
     body = RichTextField("Основной текст", blank=True)
     image = models.ImageField("Изображение", upload_to='page_images/', blank=True, null=True)
     image_caption = models.CharField("Подпись к изображению", max_length=300, blank=True)
     is_published = models.BooleanField("Опубликовано", default=True)
     updated_at = models.DateTimeField("Дата обновления", auto_now=True)
+
+    # новое поле — выбор предмета
+    subject = models.CharField(
+        "Раздел предмета",
+        max_length=20,
+        choices=SUBJECT_CHOICES,
+        default='algebra',
+    )
 
     class Meta:
         verbose_name = "Страница сайта"
@@ -116,6 +124,7 @@ class SitePage(models.Model):
         return self.title
 
     def save(self, *args, **kwargs):
+        # Автогенерация slug из title, если не заполнен
         if not self.slug:
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
