@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'ckeditor',
+    'ckeditor_uploader',
     'testsystem',  # ваше приложение
 ]
 
@@ -115,6 +116,8 @@ STATIC_URL = '/static/'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+CKEDITOR_UPLOAD_PATH = "uploads/"  # все загруженные файлы будут тут
+CKEDITOR_ALLOW_NONIMAGE_FILES = False
 
 # ------------------------------
 # Файл по умолчанию для времени

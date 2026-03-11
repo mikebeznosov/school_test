@@ -1,5 +1,6 @@
 from django.db import models
 from ckeditor.fields import RichTextField  # если используете CKEditor
+from ckeditor_uploader.fields import RichTextUploadingField
 from django.utils.text import slugify
 
 
@@ -103,6 +104,7 @@ class SitePage(models.Model):
     slug = models.SlugField("URL (slug)", max_length=200, unique=True, blank=True)
     lead = models.TextField("Вступительная часть", blank=True)
     body = RichTextField("Основной текст", blank=True)
+    body = RichTextUploadingField("Основной текст", blank=True)
     image = models.ImageField("Изображение", upload_to='page_images/', blank=True, null=True)
     image_caption = models.CharField("Подпись к изображению", max_length=300, blank=True)
     is_published = models.BooleanField("Опубликовано", default=True)
