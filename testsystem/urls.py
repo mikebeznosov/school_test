@@ -6,7 +6,7 @@ urlpatterns = [
     path('', views.home_page, name='home'),
 
     # Список тестов
-    path('tests/', views.index, name='test_index'),
+    path('tests/', views.index, name='index'),
 
     # Прохождение теста
     path('test/<int:test_id>/', views.test, name='test'),

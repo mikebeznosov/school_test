@@ -21,7 +21,7 @@ def home_page(request):
 
 
 # =====================================
-# CMS-страницы по slug
+# CMS-страницы
 # =====================================
 def page_view(request, slug):
     page = get_object_or_404(SitePage, slug=slug, is_published=True)
@@ -47,34 +47,44 @@ def index(request):
 # Прохождение теста
 # =====================================
 def test(request, test_id):
+
     test_obj = get_object_or_404(Test, id=test_id)
     questions = test_obj.questions.all()
 
-    # перемешиваем ответы
     for q in questions:
         q.shuffled_answers = list(q.answers.all())
 
     if request.method == 'POST':
+
         name = request.POST.get('name', 'Аноним')
         score = 0
 
         for q in questions:
+
             if q.allow_text_answer:
+
                 answer_text = request.POST.get(f'text_{q.id}', '').strip()
                 correct_answers = [a.text.strip() for a in q.answers.filter(is_correct=True)]
+
                 if answer_text in correct_answers:
                     score += 1
+
             else:
+
                 selected = request.POST.get(str(q.id))
+
                 if selected:
                     try:
                         answer = Answer.objects.get(id=selected)
+
                         if answer.is_correct:
                             score += 1
+
                     except Answer.DoesNotExist:
                         pass
 
         total_questions = questions.count()
+
         percent = score / total_questions * 100 if total_questions else 0
 
         if percent >= 90:
@@ -96,20 +106,32 @@ def test(request, test_id):
 
         return redirect('result_list', student_name=name)
 
-    return render(request, 'testsystem/test.html', {'test': test_obj, 'questions': questions})
+    return render(request, 'testsystem/test.html', {
+        'test': test_obj,
+        'questions': questions
+    })
 
 
 # =====================================
-# Просмотр результатов пользователя
+# Результаты одного ученика
 # =====================================
 def result_list(request, student_name):
-    results = Result.objects.filter(student_name=student_name).order_by('-date_taken')
-    return render(request, 'testsystem/results_list.html', {'results': results, 'student_name': student_name})
+
+    results = Result.objects.filter(student_name=student_name).select_related('test').order_by('-date_taken')
+
+    return render(request, 'testsystem/results_list.html', {
+        'results': results,
+        'student_name': student_name
+    })
 
 
 # =====================================
-# Просмотр всех результатов
+# Все результаты
 # =====================================
 def results_list_all(request):
+
     results = Result.objects.select_related('test').order_by('-date_taken')
-    return render(request, 'testsystem/results_list.html', {'results': results})
+
+    return render(request, 'testsystem/results_list.html', {
+        'results': results
+    })
