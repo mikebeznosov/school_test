@@ -9,6 +9,7 @@ class Test(models.Model):
     title = models.CharField("Название теста", max_length=255)
     description = models.TextField("Описание теста", blank=True)
     published_date = models.DateTimeField("Дата публикации", auto_now_add=True)
+    time_limit = models.IntegerField(default=10, help_text="Время на тест в минутах")
 
     def __str__(self):
         return self.title

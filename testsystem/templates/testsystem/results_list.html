@@ -17,7 +17,8 @@
                 <div class="col-md-3">Ученик</div>
                 <div class="col-md-3">Тест</div>
                 <div class="col-md-2">Баллы</div>
-                <div class="col-md-2">%</div>
+                <div class="col-md-1">%</div>
+                <div class="col-md-1">Оценка</div>
                 <div class="col-md-2 text-end">Детали</div>
             </div>
         </div>
@@ -29,9 +30,25 @@
                 <div class="col-md-3">{{ r.student_name }}</div>
                 <div class="col-md-3">{{ r.test_title }}</div>
                 <div class="col-md-2">{{ r.score }} / {{ r.total_questions }}</div>
-                <div class="col-md-2">{{ r.percent }}%</div>
+                <div class="col-md-1">{{ r.percent }}%</div>
+
+                <!-- Оценка -->
+                <div class="col-md-1">
+                    {% if r.grade == 5 %}
+                        <span class="badge bg-success">5</span>
+                    {% elif r.grade == 4 %}
+                        <span class="badge bg-primary">4</span>
+                    {% elif r.grade == 3 %}
+                        <span class="badge bg-warning text-dark">3</span>
+                    {% else %}
+                        <span class="badge bg-danger">2</span>
+                    {% endif %}
+                </div>
+
                 <div class="col-md-2 text-end">
-                    <a href="{% url 'result_detail' r.id %}" class="btn btn-sm btn-outline-primary">Разбор</a>
+                    <a href="{% url 'result_detail' r.id %}" class="btn btn-sm btn-outline-primary">
+                        Разбор
+                    </a>
                 </div>
 
             </div>

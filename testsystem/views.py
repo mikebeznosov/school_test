@@ -11,11 +11,13 @@ SUBJECTS = [
     ('physics', 'Физика'),
 ]
 
+
 # =====================================
 # Главная страница / CMS
 # =====================================
 def home_page(request, subject=None):
     pages = SitePage.objects.filter(is_published=True)
+
     if subject:
         pages = pages.filter(subject=subject)
 
@@ -28,6 +30,7 @@ def home_page(request, subject=None):
         'subjects': SUBJECTS,
         'current_subject': subject,
     }
+
     return render(request, 'testsystem/home_page.html', context)
 
 
@@ -43,6 +46,7 @@ def index(request):
 # Прохождение теста
 # =====================================
 def test(request, test_id):
+
     test_obj = get_object_or_404(Test, id=test_id)
     questions = test_obj.questions.all()
 
@@ -50,10 +54,10 @@ def test(request, test_id):
         q.shuffled_answers = list(q.answers.all())
 
     if request.method == 'POST':
+
         name = request.POST.get('name', 'Аноним')
         score = 0
 
-        # Создаём результат
         result = Result.objects.create(
             student_name=name,
             test=test_obj,
@@ -63,9 +67,16 @@ def test(request, test_id):
         )
 
         for q in questions:
+
             if q.allow_text_answer:
+
                 answer_text = request.POST.get(f'text_{q.id}', '').strip()
-                correct_answers = [a.text.strip() for a in q.answers.filter(is_correct=True)]
+
+                correct_answers = [
+                    a.text.strip()
+                    for a in q.answers.filter(is_correct=True)
+                ]
+
                 is_correct = answer_text in correct_answers
 
                 if is_correct:
@@ -77,12 +88,19 @@ def test(request, test_id):
                     text_answer=answer_text,
                     is_correct=is_correct
                 )
+
             else:
+
                 selected = request.POST.get(str(q.id))
+
                 if selected:
+
                     try:
+
                         answer = Answer.objects.get(id=selected)
+
                         is_correct = answer.is_correct
+
                         if is_correct:
                             score += 1
 
@@ -92,11 +110,12 @@ def test(request, test_id):
                             selected_answer=answer,
                             is_correct=is_correct
                         )
+
                     except Answer.DoesNotExist:
                         pass
 
-        # Подсчёт процента и оценка
         total_questions = questions.count()
+
         percent = (score / total_questions * 100) if total_questions else 0
 
         if percent >= 90:
@@ -114,18 +133,26 @@ def test(request, test_id):
 
         return redirect('result_detail', result_id=result.id)
 
-    return render(request, 'testsystem/test.html', {'test': test_obj, 'questions': questions})
+    return render(request, 'testsystem/test.html', {
+        'test': test_obj,
+        'questions': questions,
+        'time_limit': test_obj.time_limit
+    })
 
 
 # =====================================
 # Детальный разбор теста
 # =====================================
 def result_detail(request, result_id):
-    result = get_object_or_404(Result, id=result_id)
-    answers = StudentAnswer.objects.filter(result=result).select_related("question", "selected_answer")
 
-    # Подсчёт процента для детального отображения
+    result = get_object_or_404(Result, id=result_id)
+
+    answers = StudentAnswer.objects.filter(
+        result=result
+    ).select_related("question", "selected_answer")
+
     total_questions = result.test.questions.count()
+
     percent = (result.score / total_questions * 100) if total_questions else 0
 
     return render(request, 'testsystem/result_detail.html', {
@@ -137,21 +164,27 @@ def result_detail(request, result_id):
 
 
 # =====================================
-# Результаты конкретного ученика с процентом
+# Результаты ученика
 # =====================================
 def result_list(request, student_name):
-    results = Result.objects.filter(student_name=student_name).order_by('-date_taken')
+
+    results = Result.objects.filter(
+        student_name=student_name
+    ).order_by('-date_taken')
 
     results_with_percent = []
+
     for r in results:
+
         total_questions = r.test.questions.count()
-        score = r.score or 0
-        percent = (score / total_questions * 100) if total_questions else 0
+
+        percent = (r.score / total_questions * 100) if total_questions else 0
+
         results_with_percent.append({
             'id': r.id,
             'student_name': r.student_name,
             'test_title': r.test.title,
-            'score': score,
+            'score': r.score,
             'total_questions': total_questions,
             'percent': round(percent, 1),
             'grade': r.grade
@@ -164,33 +197,22 @@ def result_list(request, student_name):
 
 
 # =====================================
-# Все результаты (для админа) с процентами
+# Все результаты
 # =====================================
 def results_list_all(request):
+
     results = Result.objects.select_related('test').order_by('-date_taken')
 
-    results_with_percent = []
-    for r in results:
-        total_questions = r.test.questions.count()
-        score = r.score or 0
-        percent = (score / total_questions * 100) if total_questions else 0
-        results_with_percent.append({
-            'id': r.id,
-            'student_name': r.student_name,
-            'test_title': r.test.title,
-            'score': score,
-            'total_questions': total_questions,
-            'percent': round(percent, 1),
-            'grade': r.grade
-        })
-
-    return render(request, 'testsystem/results_list.html', {'results': results_with_percent})
+    return render(request, 'testsystem/results_list.html', {
+        'results': results
+    })
 
 
 # =====================================
-# Просмотр конкретной CMS-страницы
+# CMS страницы
 # =====================================
 def page_view(request, slug):
+
     page = get_object_or_404(SitePage, slug=slug, is_published=True)
 
     context = {
@@ -203,4 +225,5 @@ def page_view(request, slug):
         'current_subject': page.subject,
         'pages': SitePage.objects.filter(is_published=True),
     }
+
     return render(request, 'testsystem/home_page.html', context)
