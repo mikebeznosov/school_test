@@ -22,4 +22,5 @@ urlpatterns = [
 
     # CMS-страницы по slug — всегда последним
     path('<slug:slug>/', views.page_view, name='page'),
+    path('result/<int:result_id>/', views.result_detail, name='result_detail'),
 ]

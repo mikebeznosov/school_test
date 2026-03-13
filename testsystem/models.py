@@ -58,6 +58,17 @@ class MainMenuItem(models.Model):
 
     def __str__(self):
         return self.title
+class StudentAnswer(models.Model):
+    result = models.ForeignKey(Result, on_delete=models.CASCADE, related_name="answers")
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+
+    selected_answer = models.ForeignKey(Answer, on_delete=models.CASCADE, null=True, blank=True)
+    text_answer = models.TextField(blank=True)
+
+    is_correct = models.BooleanField("Правильно", default=False)
+
+    def __str__(self):
+        return f"{self.question.text[:40]} - {self.is_correct}"
 
 
 class SideMenuItem(models.Model):
