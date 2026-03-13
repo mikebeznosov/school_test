@@ -1,83 +1,25 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
 <meta charset="UTF-8">
-<title>Доступные тесты</title>
+<title>Тесты по {{ subject_name }}</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<style>
-body {
-    background: #f1f3f4;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI";
-}
-
-.card {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    margin-bottom: 30px;
-    width: 100%;
-    max-width: 22rem; /* максимальная ширина карточки */
-}
-
-.card-footer {
-    background: #f8f9fa;
-    font-size: 0.85rem;
-    color: #6c757d;
-    text-align: center;
-    border-top: 1px solid #dee2e6;
-    padding: 8px 0;
-}
-</style>
 </head>
-
 <body>
-
 <div class="container py-5">
+    <h2 class="mb-4">Тесты по {{ subject_name }}</h2>
 
-<h1 class="text-center mb-5">Доступные тесты</h1>
-
-<div class="row justify-content-center g-4">
-
-{% for test in tests|dictsortreversed:"id" %} {# новые тесты сверху по ID #}
-
-<div class="col-12 col-md-6 col-lg-4 d-flex justify-content-center">
-
-<div class="card">
-
-<div class="card-body d-flex flex-column justify-content-between">
-
-<h5 class="card-title">{{ test.title }}</h5>
-
-{% if test.description %}
-<p class="card-text mt-2 mb-3">{{ test.description }}</p>
-{% else %}
-<p class="card-text mt-2 mb-3">Нажмите кнопку ниже, чтобы начать прохождение теста.</p>
-{% endif %}
-
-<a href="{% url 'test' test.id %}" class="btn btn-primary mt-auto">
-Начать тест
-</a>
-
+    <div class="list-group">
+        {% for t in tests %}
+        <a href="{% url 'test' t.id %}" class="list-group-item list-group-item-action">
+            <h5 class="mb-1">{{ t.title }}</h5>
+            {% if t.description %}<small>{{ t.description }}</small>{% endif %}
+        </a>
+        {% empty %}
+        <p>Тесты отсутствуют.</p>
+        {% endfor %}
+    </div>
 </div>
-
-{% if test.published_date %}
-<div class="card-footer">
-Опубликовано: {{ test.published_date|date:"d.m.Y" }}
-</div>
-{% endif %}
-
-</div>
-
-</div>
-
-{% endfor %}
-
-</div>
-
-</div>
-
 </body>
 </html>
