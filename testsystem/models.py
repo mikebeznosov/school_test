@@ -12,21 +12,21 @@ SUBJECT_CHOICES = [
 
 # ===================== Тесты =====================
 class Test(models.Model):
-    title = models.CharField("Название теста", max_length=255)
-    description = models.TextField("Описание теста", blank=True)
-    published_date = models.DateTimeField("Дата публикации", auto_now_add=True)
-    time_limit = models.IntegerField(default=10, help_text="Время на тест в минутах")
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    subject = models.CharField(max_length=20, choices=SUBJECT_CHOICES)
 
-    # Новое поле — предмет
-    subject = models.CharField(
-        "Предмет",
-        max_length=20,
-        choices=SUBJECT_CHOICES,
-        default='algebra',
+    time_limit = models.IntegerField(
+        "Время на тест (минуты)",
+        blank=True,
+        null=True
     )
 
     def __str__(self):
         return self.title
+
+    def get_subject_display(self):
+        return dict(SUBJECT_CHOICES).get(self.subject, self.subject)
 
 
 class Question(models.Model):

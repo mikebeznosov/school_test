@@ -1,5 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
+from django.http import JsonResponse
+from django.db.models import Q  # <-- ЭТО НУЖНО ДОБАВИТЬ!
 from .models import (
     Test, Question, Answer, Result, StudentAnswer,
     MainMenuItem, SideMenuItem, SidebarLink, SitePage, MathFormula
@@ -19,7 +21,7 @@ def tests_by_subject(request, subject):
     subject_name = dict(SUBJECT_CHOICES).get(subject, subject.title())
 
     # Фильтруем тесты по предмету
-    tests = Test.objects.filter(subject=subject)  # если связь Test ↔ SitePage есть
+    tests = Test.objects.filter(subject=subject).order_by('-id')  # если связь Test ↔ SitePage есть
     # ИЛИ, если ты будешь хранить subject прямо в Test, тогда:
     # tests = Test.objects.filter(subject=subject)
 
@@ -28,6 +30,25 @@ def tests_by_subject(request, subject):
         'subject_name': subject_name
     }
     return render(request, 'testsystem/tests_by_subject.html', context)
+
+def tests_live_search(request):
+    query = request.GET.get('q', '')
+
+    tests = Test.objects.filter(
+        Q(title__icontains=query) |
+        Q(description__icontains=query)
+    )[:10]
+
+    data = []
+
+    for test in tests:
+        data.append({
+            'id': test.id,
+            'title': test.title,
+            'subject': test.get_subject_display(),
+        })
+
+    return JsonResponse(data, safe=False)
 
 
 # ===============================
@@ -39,13 +60,41 @@ def tests_by_subject(request, subject):
 # ===============================
 def tests_search(request):
     query = request.GET.get('q', '').strip()
-    tests = Test.objects.all()
+
+    # ДИАГНОСТИКА В КОНСОЛИ
+    print("\n" + "=" * 50)
+    print("🔥 ВЫЗВАНА ФУНКЦИЯ ПОИСКА")
+    print(f"📝 GET параметры: {request.GET}")
+    print(f"🔍 Поисковый запрос: '{query}'")
+
+    # Получаем все тесты
+    all_tests = Test.objects.all()
+    print(f"📊 Всего тестов в БД: {all_tests.count()}")
+
+    # Выводим все тесты
+    print("📋 Список всех тестов:")
+    for test in all_tests:
+        print(f"  - ID:{test.id} | '{test.title}' | предмет: {test.subject}")
+
+    # Фильтруем
     if query:
-        # фильтруем именно по названию теста
-        tests = tests.filter(title__icontains=query)
+        tests = all_tests.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query)
+        )
+        print(f"✅ Найдено после фильтра: {tests.count()}")
+        for test in tests:
+            print(f"  ✓ НАЙДЕН: {test.title}")
+    else:
+        tests = all_tests
+        print("📋 Показываем все тесты")
+
+    recent_tests = Test.objects.all().order_by('-id')[:3]
+
     context = {
         'tests': tests,
         'query': query,
+        'recent_tests': recent_tests,
     }
     return render(request, 'testsystem/tests_search.html', context)
 
@@ -172,8 +221,23 @@ def result_list(request, student_name):
 # ===============================
 def results_list_all(request):
     results = Result.objects.select_related('test').order_by('-date_taken')
+    results_with_percent = []
+
+    for r in results:
+        total_questions = r.test.questions.count()
+        percent = (r.score / total_questions * 100) if total_questions else 0
+        results_with_percent.append({
+            'id': r.id,
+            'student_name': r.student_name,
+            'test_title': r.test.title,  # добавлено название теста
+            'score': r.score,
+            'total_questions': total_questions,
+            'percent': round(percent, 1),
+            'grade': r.grade
+        })
+
     return render(request, 'testsystem/results_list.html', {
-        'results': results
+        'results': results_with_percent
     })
 
 
@@ -193,5 +257,6 @@ def page_view(request, slug):
         'pages': SitePage.objects.filter(is_published=True),
     }
     return render(request, 'testsystem/home_page.html', context)
+
 def home_page(request):
     return redirect('tests_by_subject', subject='algebra')  # редирект на алгебру по умолчанию

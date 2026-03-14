@@ -16,7 +16,7 @@ body { background: #f1f3f4; }
     transform: translateY(30px);
     display: flex;
     flex-direction: column;
-    height: 100%; /* чтобы все карточки одинаковой высоты */
+    height: 100%;
 }
 
 .card-test.visible {
@@ -33,6 +33,13 @@ body { background: #f1f3f4; }
     display: flex;
     flex-direction: column;
     flex: 1;
+}
+
+.subject-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.8rem;
 }
 </style>
 </head>
@@ -68,31 +75,114 @@ body { background: #f1f3f4; }
 <div class="container my-4">
     <h2 class="mb-4">Результаты поиска{% if query %} по "{{ query }}"{% endif %}</h2>
 
-    {% if tests %}
-    <div class="row g-3">
-        {% for test in tests %}
-        <div class="col-md-4 d-flex">
-            <div class="card card-test">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">{{ test.title }}</h5>
-                    {% if test.description %}
-                    <p class="card-text">{{ test.description|truncatewords:20 }}</p>
-                    {% endif %}
-                    <a href="{% url 'test' test.id %}" class="btn btn-primary mt-auto">Пройти тест</a>
+    {% if query %}
+        {% if tests %}
+            <p class="text-muted">Найдено тестов: {{ tests|length }}</p>
+            <div class="row g-3">
+                {% for test in tests %}
+                <div class="col-md-4 d-flex">
+                    <div class="card card-test">
+                        {% if test.subject %}
+                        <span class="badge bg-info subject-badge">
+                            {{ test.get_subject_display|default:test.subject }}
+                        </span>
+                        {% endif %}
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ test.title }}</h5>
+                            {% if test.description %}
+                            <p class="card-text">{{ test.description|truncatewords:20 }}</p>
+                            {% endif %}
+
+                            <!-- Дополнительная информация о тесте -->
+                            <div class="mt-2 mb-3">
+                                {% if test.questions.count %}
+                                <small class="text-muted">
+                                    Вопросов: {{ test.questions.count }}
+                                </small>
+                                {% endif %}
+
+                                {% if test.time_limit %}
+                                <br>
+                                <small class="text-muted">
+                                    Время: {{ test.time_limit }} мин.
+                                </small>
+                                {% endif %}
+                            </div>
+
+                            <a href="{% url 'test' test.id %}" class="btn btn-primary mt-auto">Пройти тест</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <h4 class="alert-heading">Ничего не найдено!</h4>
+                <p>По вашему запросу "{{ query }}" тесты не найдены.</p>
+                <hr>
+                <p class="mb-0">Попробуйте:</p>
+                <ul>
+                    <li>Проверить правильность написания</li>
+                    <li>Использовать более общий запрос</li>
+                    <li>Поискать по названию теста</li>
+                </ul>
+            </div>
+
+            <!-- Показываем несколько последних тестов для примера -->
+            {% if recent_tests %}
+            <div class="mt-5">
+                <h4>Возможно, вас заинтересуют:</h4>
+                <div class="row g-3 mt-2">
+                    {% for test in recent_tests %}
+                    <div class="col-md-4 d-flex">
+                        <div class="card card-test visible">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ test.title }}</h5>
+                                <a href="{% url 'test' test.id %}" class="btn btn-outline-primary btn-sm">Пройти тест</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
-        </div>
-        {% endfor %}
-    </div>
+            {% endif %}
+        {% endif %}
     {% else %}
-    <p>По вашему запросу тесты не найдены.</p>
+        <div class="alert alert-secondary">
+            <h4 class="alert-heading">Поиск тестов</h4>
+            <p>Введите поисковый запрос для поиска тестов по названию или описанию.</p>
+            <hr>
+            <p class="mb-0">Например: "алгебра", "5 класс", "уравнения"</p>
+        </div>
+
+        <!-- Показываем все тесты или популярные, когда поиск пустой -->
+        {% if tests %}
+        <div class="mt-4">
+            <h4>Все доступные тесты:</h4>
+            <div class="row g-3 mt-2">
+                {% for test in tests %}
+                <div class="col-md-4 d-flex">
+                    <div class="card card-test visible">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ test.title }}</h5>
+                            {% if test.subject %}
+                            <p class="text-muted small">Предмет: {{ test.get_subject_display|default:test.subject }}</p>
+                            {% endif %}
+                            <a href="{% url 'test' test.id %}" class="btn btn-outline-primary btn-sm">Пройти тест</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     {% endif %}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // Плавное появление карточек при скролле
-const cards = document.querySelectorAll('.card-test');
+const cards = document.querySelectorAll('.card-test:not(.visible)');
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if(entry.isIntersecting){
@@ -102,6 +192,13 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.2 });
 
 cards.forEach(card => observer.observe(card));
+
+// Если карточек мало или они уже видимы, показываем их сразу
+if (cards.length === 0) {
+    document.querySelectorAll('.card-test').forEach(card => {
+        card.classList.add('visible');
+    });
+}
 </script>
 
 </body>

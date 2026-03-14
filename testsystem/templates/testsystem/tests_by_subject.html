@@ -67,10 +67,16 @@ body { background: #f1f3f4; }
           <a class="nav-link {% if subject_name == 'Физика' %}active{% endif %}" href="{% url 'tests_by_subject' 'physics' %}">Физика</a>
         </li>
       </ul>
-      <form class="d-flex" method="get" action="{% url 'tests_search' %}">
-        <input class="form-control me-2" type="search" name="q" placeholder="Поиск тестов" aria-label="Search">
-        <button class="btn btn-outline-success" type="submit">Поиск</button>
-      </form>
+      <div class="position-relative">
+    <input
+        id="searchInput"
+        class="form-control me-2"
+        type="search"
+        placeholder="Поиск тестов"
+        autocomplete="off">
+
+    <div id="searchResults" class="list-group position-absolute w-100"></div>
+</div>
     </div>
   </div>
 </nav>
@@ -112,6 +118,48 @@ const observer = new IntersectionObserver((entries) => {
 });
 
 cards.forEach(card => observer.observe(card));
+</script>
+
+<script>
+const input = document.getElementById('searchInput');
+const results = document.getElementById('searchResults');
+
+input.addEventListener('keyup', function(){
+
+    const query = input.value;
+
+    if(query.length < 2){
+        results.innerHTML = '';
+        return;
+    }
+
+    fetch(`/tests/live-search/?q=${query}`)
+    .then(response => response.json())
+    .then(data => {
+
+        results.innerHTML = '';
+
+        data.forEach(test => {
+
+            const item = document.createElement('a');
+
+            item.className = "list-group-item list-group-item-action";
+
+            item.href = `/test/${test.id}/`;
+
+            item.innerHTML = `
+                <strong>${test.title}</strong>
+                <br>
+                <small>${test.subject}</small>
+            `;
+
+            results.appendChild(item);
+
+        });
+
+    });
+
+});
 </script>
 
 </body>
